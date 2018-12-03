@@ -1,0 +1,153 @@
+//index.html
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>repl.it</title>
+    <link href="index.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    
+    <div id="tabuleiro">
+      <table id="mapa">
+        
+      </table>
+    </div>
+    
+    <script src="batalha-naval.js"></script>
+  </body>
+</html>
+
+//index.js
+
+var mapa = [];
+var tamanho = 6;
+var tentativas = 0;
+var acertos = 0;
+var possibilidades = 0;
+
+function definirNavios() {
+  mapa = [];
+  
+  var nav1 = [Math.floor((Math.random() * (tamanho - 1)) + 1), Math.floor((Math.random() * (tamanho - 1)) + 1)];
+  var nav2 = [Math.floor((Math.random() * (tamanho - 1)) + 1), Math.floor((Math.random() * (tamanho - 1)) + 1)];
+  var nav3 = [Math.floor((Math.random() * (tamanho - 1)) + 1), Math.floor((Math.random() * (tamanho - 1)) + 1)];
+  
+  console.log(nav1, nav2, nav3);
+  
+  for(var i = 0; i <= tamanho; i++) {
+    var linha = []
+    var aux = false;
+    for(var j = 0; j <= tamanho; j++) {
+      if((i == nav1[0] && j == nav1[0]) || (i == nav2[0] && j == nav2[0]) || (i == nav3[0] && j == nav3[0])) {
+        linha[j - 1] = 'N';
+        linha.push('N');
+        aux = true;
+        possibilidades+=2;
+      }else {
+        if(aux) {
+          linha.push('N');
+          aux = false;
+          possibilidades++;
+        }
+        else linha.push('O');
+      }
+    }
+    mapa.push(linha);
+  }
+  
+}
+
+function tentar(i, j) {
+  var ponto = document.getElementById("i" + i + "j" + j);
+  
+  if(mapa[i][j] == 'N') {
+    mapa[i][j] = 'X';
+    ponto.className="ponto navio";
+    ponto.onclick = '';
+    
+    acertos++;
+    tentativas++;
+    
+    if(acertos >= possibilidades) {
+      alert("Você ganhou em " + tentativas + " tentativas!!");
+      
+      possibilidades = 0;
+      acertos = 0;
+      tentativas = 0;
+			
+      definirNavios();
+      criarTabuleiro();
+    }
+  }else if(mapa[i][j] == 'O'){
+    mapa[i][j] = 'X';
+    ponto.className="ponto errou";
+    ponto.onclick = '';
+    
+    tentativas++;
+  }
+}
+
+function criarTabuleiro() {
+  var tabela = document.getElementById("mapa");
+  
+  var str = "";
+  
+  for(var i = 0; i <= tamanho; i++) {
+    str += "<tr>";
+    for(var j = 0; j <= tamanho; j++) {
+      str += "<td class='ponto mar' id='i" +  i + "j" + j + "' onclick='tentar(" + i + ", " + j + ")'></td>";
+    }
+    str += "</tr>";
+  }
+  
+  tabela.innerHTML = str;
+}
+
+definirNavios();
+criarTabuleiro();
+
+//index.css
+
+body {
+	background-color: black;
+}
+
+.mar {
+	background-image: url('https://images.pexels.com/photos/953214/pexels-photo-953214.jpeg?auto=compress&cs=tinysrgb&h=350');
+	background-repeat: no-repeat;
+	background-size: 100% 100%;
+}
+
+.mar:hover {
+	background-image: url('https://cdn2.iconfinder.com/data/icons/flat-icons-web/40/Remove-512.png'), url('https://images.pexels.com/photos/953214/pexels-photo-953214.jpeg?auto=compress&cs=tinysrgb&h=350');
+}
+
+.ponto {
+  width: 70px;
+  height: 70px;
+}
+.ponto:hover {
+  cursor: pointer;
+}
+.errou {
+	background-image: url('https://media.istockphoto.com/photos/textured-red-background-picture-id184967152?k=6&m=184967152&s=612x612&w=0&h=hwPZugfxrZ3_JDRHIo68jCrE1f4T4dpLzzuwlfldUW0=');
+	background-repeat: no-repeat;
+	background-size: 100% 100%;
+}
+.errou:hover {
+  cursor: default;
+}
+.navio {
+	background-image: url('http://www.primemaritech.com/wp-content/uploads/2015/09/Ship-Icon.png');
+	background-repeat: no-repeat;
+	background-size: 100% 100%;
+}
+.navio:hover {
+  cursor: default;
+}
+#mapa {
+  margin: auto;
+}
