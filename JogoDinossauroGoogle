@@ -1,0 +1,368 @@
+//index.html
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>repl.it</title>
+    <link href="index.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <p id="pontuacao">0</p>
+    <script src="index.js"></script>
+  </body>
+</html>
+
+//index.js
+const WIDTH = 500;
+const HEIGHT = 200;
+
+const UP = 38;
+const SPACE = 32;
+const DOWN = 40;
+
+const JUMP_HIGHT = -80;
+
+const REX_SRC = "https://imgur.com/msolD6y.png";
+const FLOOR_SRC = "https://imgur.com/9m1LhXZ.png";
+const CACTO1_SRC = "https://imgur.com/AkQ6e45.png";
+const CACTO2_SRC = "https://imgur.com/pSB0UJI.png";
+const AVE_SRC = "https://imgur.com/crju4a6.png";
+const NUVEM = "https://imgur.com/NyE9VHW.png";
+
+const CACTO1_W = 30;
+const CACTO1_H = 55;
+
+const CACTO2_W = 45;
+const CACTO2_H = 55;
+
+const FPS = 60;
+
+class Game {
+  constructor() {
+    this.canvas = document.createElement("canvas");
+    document.addEventListener('keydown', ok => {
+      this.tratarTeclado();
+    });
+    document.addEventListener('keyup', ok => {
+      this.tratarTeclado();
+    });
+    this.canvas.width = WIDTH;
+    this.canvas.height = HEIGHT;
+    //this.canvas.style.border = "1px solid black";
+    this.context = this.canvas.getContext("2d");
+    document.body.insertBefore(this.canvas, document.body.childNodes[2]);
+    this.context.translate(0, HEIGHT);
+  }
+
+  init() {
+    this.rodando = false;
+    this.childs = [];
+    this.score = 0;
+    this.frame = 0;
+
+    this.dino = new Dino(5, 30, 0, 50, 50);
+    this.chao1 = new Chao(0, 0, 2404, 60);
+    this.chao2 = new Chao(2404, 0, 2404, 60);
+
+    let cac1 = new Cacto(WIDTH, 0, 2);
+    let cac2 = new Cacto(2 * WIDTH, 0, 1)
+
+    this.childs.push(this.dino);
+    this.childs.push(this.chao1);
+    this.childs.push(this.chao2);
+    this.childs.push(cac1);
+    this.childs.push(cac2);
+
+    this.obstacleQueue = [cac1, cac2];
+  }
+
+  start() {
+    this.rodando = true;
+    this.loop = setInterval(ok => {
+      this.clear();
+      this.atualizar();
+      this.atualizarScore();
+    }, 1000 / FPS);
+  }
+
+  atualizarScore() {
+    document.getElementById("pontuacao").innerHTML = this.score;
+
+    this.frame++;
+    if(this.frame % 10 == 0) {
+      this.dino.speed += this.dino.acceleration;
+      this.score++;
+
+      if(this.score % 100 == 0 && !this.score == 0) {
+        this.dino.speed+=0.25;
+      }
+
+      if(this.score % 300 == 0) {
+        document.getElementById('pontuacao').className = "";
+        document.body.style.backgroundColor = "white";
+      }else if(this.score % 150 == 0) {
+        document.getElementById('pontuacao').className = "noite";
+        document.body.style.backgroundColor = "black";
+      }
+    }
+  }
+
+  tratarTeclado() {
+    let key = event.keyCode;
+    
+    if(event.type == "keydown") {
+      switch(key) {
+        case UP: {
+          if(!this.rodando) {
+            this.init();
+            this.start();
+          } else 
+            this.dino.pular();
+          break;
+        }
+        case SPACE: {
+          if(!this.rodando) {
+            this.init();
+            this.start();
+          } else 
+            this.dino.pular();
+          break;
+        }
+        case DOWN: {
+          this.dino.baixar();
+          break;
+        }
+      }
+    } else if(event.type == "keyup") {
+      switch(key) {
+        case DOWN: {
+          this.dino.levantar();
+          break;
+        }
+      }
+    }
+  }
+
+  atualizar() {
+    for(let c of this.childs) {
+      c.atualizar(this.context);
+    }
+  }
+
+  clear() {
+    this.context.clearRect(0, 0, WIDTH, -HEIGHT);
+  }
+}
+
+class Dino {
+  constructor(speed, posX, posY, width, height) {
+    this.acceleration = 0.001;
+    this.speed = speed;
+    this.gravity = 0;
+    this.gravitySpeed = 0;
+
+    this.width = width;
+    this.height = height;
+
+    this.posX = posX;
+    this.posY = -posY - height;
+    this.initY = this.posY;
+
+    this.pulando = false;
+
+    this.image = new Image(width, height);
+    this.image.src = REX_SRC;
+    this.agachado = false;
+  }
+
+  pular() {
+    if(!this.pulando) {
+      this.pulando = true;
+      this.gravity-=1.5;
+    }
+  }
+
+  baixar() {
+    //this.image.src = AVE_SRC;
+    this.width = this.image.width;
+    this.height = this.image.height;
+  }
+  
+  levantar() {
+    this.image.src = REX_SRC;
+    this.width = this.image.width;
+    this.height = this.image.height;
+  }
+  
+  colidiu() {
+    for(let obj of game.childs) {
+      if(obj instanceof Obstaculo) {
+        if(this.posX + this.width - 10 >= obj.posX && this.posX <= obj.posX + obj.width) {
+          if(this.posY + this.height >= obj.posY + 10) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  atualizar(ctx) {
+    if(this.colidiu()) {
+      game.rodando = false;
+      clearInterval(game.loop);
+    }
+    
+    // Desenhar imagem
+    ctx.drawImage(this.image, 
+      this.posX, 
+      this.posY,
+      this.width, this.height);
+
+    // Se chegar a determinada altura, adicionar gravidade
+    if(this.posY <= JUMP_HIGHT) {
+      this.gravity = 0.6;
+    }
+
+    // Aumentar velocidade de subida/descida de acordo com a gravidade (seja positiva ou negativa)
+    this.gravitySpeed += this.gravity;
+    
+    // Se a próxima posição não deixar o dinossauro abaixo do chão, ir para prox posição
+    if(!(this.posY + this.gravitySpeed > -this.height)){
+      this.posY += this.gravitySpeed;
+    }else { // Senão, deixar no chão, e resetar variáveis de pulo/gravidade
+      this.posY = -this.height;
+      this.pulando = false;
+      this.gravitySpeed = 0;
+      this.gravity = 0;
+    }
+
+  }
+}
+
+class Obstaculo {
+  constructor(posX, posY, width, height) {
+    this.width = width;
+    this.height = height;
+    this.posX = posX;
+    this.posY = -posY - height;
+  }
+
+  atualizar(ctx) {
+    if(-game.dino.speed < this.posX && this.posX < game.dino.speed) {
+      game.obstacleQueue.push(this);
+    }
+  }
+}
+
+class Chao {
+  constructor(posX, posY, width, height) {
+    this.posX = posX;
+    this.posY = -posY - height;
+    this.width = width;
+    this.height = height;
+
+    this.image = new Image(width, height);
+    this.image.src = FLOOR_SRC;
+  }
+
+  atualizar(ctx) {
+    this.posX -= game.dino.speed;
+
+    if(this.posX <= (-2 * this.width) + WIDTH) {
+      this.posX += 2 * this.width;
+    }
+
+    ctx.drawImage(this.image, 
+      this.posX, 
+      this.posY,
+      this.width, this.height);
+  }
+}
+
+class Cacto extends Obstaculo {
+  constructor(posX, posY, quantidade) {
+    switch(quantidade) {
+      case 1: 
+        super(posX, 0, CACTO1_W, CACTO1_H);
+        this.image = new Image(this.width, this.height);
+        this.image.src = CACTO1_SRC;
+        break;
+      case 2:
+        super(posX, 0, CACTO2_W, CACTO2_H);
+        this.image = new Image(this.width, this.height);
+        this.image.src = CACTO2_SRC;
+        break;
+    }
+
+    this.quantidade = quantidade;
+  }
+
+  atualizar(ctx) {
+    super.atualizar(ctx);
+    ctx.drawImage(this.image, 
+      this.posX, 
+      this.posY,
+      this.width, this.height);
+
+    if(game.obstacleQueue[0] == this && this.posX < WIDTH - 300 && this.posX > 0) {
+      game.obstacleQueue.shift();
+    }
+
+    this.posX -= game.dino.speed;
+
+    // Se tiver passado da tela e o frame for multiplo de 10
+    if(this.posX < -this.width && game.frame % 10 == 0) {
+      let rand = Math.floor(Math.random() * 100) + 1;
+      
+      // 70% de chance de aparecer, e se for o primeiro da lista
+      if(rand < 70 && game.obstacleQueue.length > 0) {
+        if(game.obstacleQueue[0] == this) {
+          this.posX = WIDTH;
+        }
+      }
+    }
+  }
+}
+
+class Ave extends Obstaculo {
+  constructor(posX, posY, width, height) {
+    super(posX, posY, width, height);
+  }
+}
+
+let game;
+
+function startGame() {
+  game = new Game();
+  
+  document.addEventListener('click', ok => {
+    if(!game.rodando) {
+      game.init();
+      game.start();
+    }
+  });
+}
+
+startGame();
+
+//index.css
+
+canvas {
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+#pontuacao {
+  text-align: center;
+  font-size: 25px;
+}
+
+.noite {
+  color: white;
+}
