@@ -1,0 +1,82 @@
+//index.html
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>repl.it</title>
+    <link href="index.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    
+    <img src="" id="imagem" width="290" height="193">
+    <br>
+    <input type="text" id="entrada">
+    <button id="enviar" onclick="verificarBandeira()">Enviar</button>
+    <button id="pular" onclick="gerarBandeira()">Pular</button>
+    
+    <p id="acertos">Acertos: 0</p>
+    <p id="tentativas">Tentativas: 0</p>
+    
+    <script src="index.js"></script>
+  </body>
+</html>
+
+//index.js
+
+var paises = [{pais: 'brasil', sigla: 'br'},
+  {pais: 'russia', sigla: 'ru'},
+  {pais: 'servia', sigla: 'rs'},
+  {pais: 'argentina', sigla: 'ar'},
+  {pais: 'uruguai', sigla: 'uy'},
+  {pais: 'senegal', sigla: 'sn'},
+  {pais: 'portugal', sigla: 'pt'},
+  {pais: 'marrocos', sigla: 'ma'},
+  {pais: 'costa rica', sigla: 'cr'}
+]
+
+var url = 'http://flags.fmcdn.net/data/flags/w580/X.png';
+
+var paisAtual;
+
+var acertos = 0;
+var tentativas = 0;
+
+function gerarBandeira() {
+  n = Math.floor(Math.random() * paises.length);
+  
+  var image = document.getElementById("imagem");
+  image.src = url.replace('X', paises[n].sigla);
+  paisAtual = n;
+}
+
+function verificarBandeira() {
+  var inp = document.getElementById("entrada");
+  
+  var tentativasInp = document.getElementById("tentativas");
+  tentativas++;
+  tentativasInp.innerHTML = "Tentativas: " + tentativas;
+  
+  console.log(paises[paisAtual].pais);
+  
+  if(inp.value == paises[paisAtual].pais) {
+    gerarBandeira();
+    
+    var acertosInp = document.getElementById("acertos");
+    acertos++;
+    acertosInp.innerHTML = "Acertos: " + acertos;
+  }else {
+    alert("Errou...");
+  }
+  
+  inp.value = "";
+}
+
+gerarBandeira();
+
+//index.css
+
+p {
+  font-weight: bold;
+}
